@@ -7,10 +7,9 @@ import (
 	dp "github.com/chromedp/chromedp"
 	"log"
 	"time"
-	"fmt"
 )
 
-func fetchEanByArticleNumber(articleNr string) (string, error){
+func fetchEanAndPriceByArticleNumber(articleNr string) (string, string, error){
 
 	var err error
 	dataChan := make(chan string)
@@ -26,7 +25,7 @@ func fetchEanByArticleNumber(articleNr string) (string, error){
 	// Fetch ProductData
 	go func(url string, dc chan string) {
 		var productData string
-		err = cdpRun(fetchProductData(url,&productData))
+		err = cdpRun(fetchProductDataTasks(url,&productData))
 		if err != nil {
 			log.Panic(err)
 		}
@@ -36,16 +35,25 @@ func fetchEanByArticleNumber(articleNr string) (string, error){
 	select {
 	case data := <- dataChan:
 
-		fmt.Println("search result: " + data)
+		ean, err := parseEan(data)
+		if err != nil {
+			return "", "", err
+		}
 
-		return parseEan(data)
+		price, err := parsePrice(data)
+		if err != nil {
+			return "", "", err
+		}
+
+		return ean, price, nil
+
 	case <-time.After(20 * time.Second):
-		return "", errors.New("search for article number or EAN timed out")
+		return "", "", errors.New("search for article number or EAN timed out")
 	}
 
 }
 
-func fetchProductData(url string, data *string) dp.Tasks{
+func fetchProductDataTasks(url string, data *string) dp.Tasks{
 	if data == nil {
 		log.Panic("data cannot be nil")
 	}
@@ -68,9 +76,25 @@ func parseEan(productData string) (string, error) {
 
 	ean := eanMatch[1]
 	if  ean == "null" {
-		return "", errors.New("no EAN, EAN is 'null'")
+		return "", errors.New("EAN is 'null'")
 	}
 
 	return ean, nil
 
+}
+
+func parsePrice(productData string) (string, error) {
+	priceRegex := regexp.MustCompile(`\,\"techPriceAmount"\:\"(\d+\.\d+)\"\,`)
+
+	priceMatch := priceRegex.FindStringSubmatch(productData)
+	if len(priceMatch) < 2 || priceMatch[1] == "" {
+		return "", errors.New("no price found")
+	}
+
+	price := priceMatch[1]
+	if  price == "null" {
+		return "", errors.New("price is 'null'")
+	}
+
+	return price, nil
 }
