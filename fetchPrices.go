@@ -8,15 +8,18 @@ import (
 	"regexp"
 	"strings"
 	"strconv"
+	"errors"
 )
 
 var priceRegex *regexp.Regexp
 
-func GetPricesFromNumber(ean string) ([]float64, error) {
+func fetchPricesForEan(ean string) ([]float64, error) {
+
+	log.Printf("Trying to fetch prices for EAN: %s", ean)
 
 	client := &http.Client{}
 
-	domain := getConfig().Domain
+	domain := getConfig().PricesDomain
 
 	// Build URL
 	var url bytes.Buffer
@@ -30,7 +33,7 @@ func GetPricesFromNumber(ean string) ([]float64, error) {
 
 	// Add Query Parameters to URL
 	q := req.URL.Query()
-	q.Add(getConfig().QueryParam, ean)
+	q.Add(getConfig().PricesQueryParam, ean)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := client.Do(req)
@@ -45,15 +48,18 @@ func GetPricesFromNumber(ean string) ([]float64, error) {
 	}
 
 	// read prices from html
-	prices := getPrices(string(body))
+	prices := parsePrices(string(body))
+	if len(prices) == 0 {
+		return nil, errors.New("EAN not found on: " + getConfig().PricesDomain)
+	}
 
 	return prices, nil
 
 }
 
-func getPrices(html string) []float64 {
+func parsePrices(html string) []float64 {
 
-	priceRegex = regexp.MustCompile(getConfig().Regex)
+	priceRegex = regexp.MustCompile(getConfig().PricesRegex)
 
 	var prices []float64
 
