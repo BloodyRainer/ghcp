@@ -6,11 +6,6 @@ import (
 
 func Init() {
 	initConfig()
-	initChromeDp()
-}
-
-func ShutDown() {
-	shutDownChromeDP()
 }
 
 // The 0th price is the comparison-price, the first price is the best price

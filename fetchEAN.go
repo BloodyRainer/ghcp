@@ -4,15 +4,10 @@ import (
 	"bytes"
 	"regexp"
 	"errors"
-	dp "github.com/chromedp/chromedp"
-	"log"
-	"time"
+	"os/exec"
 )
 
-func fetchEanAndPriceByArticleNumber(articleNr string) (string, string, error){
-
-	var err error
-	dataChan := make(chan string)
+func fetchEanAndPriceByArticleNumber(articleNr string) (string, string, error) {
 
 	// Build URL
 	var url bytes.Buffer
@@ -22,47 +17,24 @@ func fetchEanAndPriceByArticleNumber(articleNr string) (string, string, error){
 	url.WriteString("?articlenumber=")
 	url.WriteString(articleNr)
 
-	// Fetch ProductData
-	go func(url string, dc chan string) {
-		var productData string
-		err = cdpRun(fetchProductDataTasks(url,&productData))
-		if err != nil {
-			log.Panic(err)
-		}
-		dc <- productData
-	}(url.String(), dataChan)
+	out, err := exec.Command("google-chrome", "--headless", "--disable-gpu", "--dump-dom", url.String()).Output()
 
-	select {
-	case data := <- dataChan:
-
-		ean, err := parseEan(data)
-		if err != nil {
-			return "", "", err
-		}
-
-		price, err := parsePrice(data)
-		if err != nil {
-			return "", "", err
-		}
-
-		return ean, price, nil
-
-	case <-time.After(20 * time.Second):
-		return "", "", errors.New("search for article number or EAN timed out")
+	if err != nil {
+		return "", "", err
 	}
 
-}
+	ean, err := parseEan(string(out))
+	if err != nil {
+		return "", "", err
+	}
 
-func fetchProductDataTasks(url string, data *string) dp.Tasks{
-	if data == nil {
-		log.Panic("data cannot be nil")
+	price, err := parsePrice(string(out))
+	if err != nil {
+		return "", "", err
 	}
-	return dp.Tasks {
-		dp.Navigate(url),
-		dp.WaitVisible(`//div[@class='gridAndInfoContainer']`, dp.BySearch),
-		dp.Sleep(100 * time.Millisecond),
-		dp.InnerHTML(`//script[@id='productDataJson']`, data),
-	}
+
+	return ean, price, nil
+
 }
 
 func parseEan(productData string) (string, error) {
