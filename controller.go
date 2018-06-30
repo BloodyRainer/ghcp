@@ -2,9 +2,11 @@ package ghcp
 
 import (
 	"strconv"
+	"log"
 )
 
 func Init() {
+	log.Println("Start GHCP")
 	initConfig()
 }
 
