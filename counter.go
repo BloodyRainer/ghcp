@@ -2,17 +2,16 @@ package ghcp
 
 import (
 	"time"
-	"sync"
 )
 
 type Counter struct {
-	acMaps     []acMap  // the process frequently switches between two article count maps. At a time one is to be written to and one is to be read out of.
-	wsw        chan int // wsw stands for write-switch
-	rsw        chan int // rsw stands for read-switch
-	ticker     *time.Ticker
-	switchChan chan bool // chan for the ticker that emits the signal to switch between maps
-	topN       int       // collect the top n articles with the highest Count
-	wg         sync.WaitGroup
+	acMaps       []acMap  // the process frequently switches between two article count maps. At a time one is to be written to and one is to be read out of.
+	wsw          chan int // wsw stands for write-switch
+	rsw          chan int // rsw stands for read-switch
+	ticker       *time.Ticker
+	switchChan   chan bool // chan for the ticker that emits the signal to switch between maps
+	topN         int       // collect the top n articles with the highest Count
+	topNDone chan bool
 }
 
 type acMap map[string]int // acMap stands for article count map
@@ -25,7 +24,7 @@ func MakeCounter(interval time.Duration, numberOfTopArticles int) *Counter {
 		rsw:        make(chan int),
 		ticker:     time.NewTicker(interval),
 		topN:       numberOfTopArticles,
-		wg:         sync.WaitGroup{},
+		topNDone: 	make(chan bool),
 	}
 
 	c.acMaps[0] = make(map[string]int)
@@ -36,21 +35,6 @@ func MakeCounter(interval time.Duration, numberOfTopArticles int) *Counter {
 	go c.switchMap()
 
 	return c
-}
-
-func (rcv *Counter) startTicker() {
-
-	for {
-		select {
-		case <-rcv.ticker.C:
-
-			// waiting for the topN-Articles-Counter to finish
-			rcv.wg.Wait()
-
-			//log.Println("send switch signal")
-			rcv.switchChan <- true
-		}
-	}
 }
 
 func (rcv *Counter) CountArticleChan() chan<- string {
@@ -95,7 +79,6 @@ func (rcv *Counter) TopNArticlesChan() <-chan []Article {
 		for {
 			select {
 			case r := <-rcv.rsw:
-				rcv.wg.Add(1)
 
 				readMap := rcv.acMaps[r]
 
@@ -104,8 +87,7 @@ func (rcv *Counter) TopNArticlesChan() <-chan []Article {
 
 				// reset map
 				rcv.acMaps[r] = make(map[string]int)
-
-				rcv.wg.Done()
+				rcv.topNDone <- true
 			}
 		}
 	}()
@@ -137,6 +119,28 @@ func (rcv *Counter) switchMap() {
 				//log.Println("sending read switch map1")
 				rcv.rsw <- 1
 			}
+		}
+	}
+}
+
+func (rcv *Counter) startTicker() {
+
+	var proceed = true
+
+	for {
+		select {
+		case proceed = <- rcv.topNDone:
+
+		case <-rcv.ticker.C:
+
+			// waiting for the topN-Articles-Counter to finish
+			if !proceed {
+				continue
+			}
+
+			//log.Println("send switch signal")
+			rcv.switchChan <- true
+			proceed = false
 		}
 	}
 }
