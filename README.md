@@ -10,6 +10,8 @@ The ENV-Variable `GHCP_PRICES_REGEX` has to be set to a string value.
 
 The ENV-Variable `GHCP_EAN_DOMAIN` has to be set to www.example.com.
 
+The ENV-Variable `GHCP_DEBUG` can be set to TRUE to enable Debug-Logging.
+
 ## Example Usage:
 ```
 ghcp.Init() // Init GHCP

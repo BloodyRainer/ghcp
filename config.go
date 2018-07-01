@@ -10,6 +10,7 @@ type Config struct {
 	PricesQueryParam string `required:"true" split_words:"true"`
 	PricesRegex      string `required:"true" split_words:"true"`
 	EanDomain        string `required:"true" split_words:"true"`
+	Debug            string `default:"false"`
 }
 
 var c Config
@@ -24,11 +25,13 @@ func initConfig() {
 		"ghcp_prices_query_param: %s\n"+
 		"ghcp_prices_regex: %s\n"+
 		"ghcp_ean_domain: %s\n"+
+		"ghcp_debug: %s\n"+
 		"\n",
 		c.PricesDomain,
 		c.PricesQueryParam,
 		c.PricesRegex,
-		c.EanDomain)
+		c.EanDomain,
+		c.Debug)
 }
 
 func getConfig() Config {

@@ -48,21 +48,20 @@ func (rcv *Counter) CountArticleChan() chan<- string {
 		for {
 			select {
 			case w = <-rcv.wsw:
-				//log.Printf("received write switch top, map nr. %v \n", w)
+				debugLog().printf("received write switch top, map nr. %v \n", w)
 			default:
 			}
 
 			select {
 			case w = <-rcv.wsw:
-				//log.Printf("received write switch bottom, map nr. %v \n", w)
+				debugLog().printf("received write switch bottom, map nr. %v \n", w)
 
 			case aNr := <-countArticleNr:
 
 				readMap := rcv.acMaps[w]
 
-				//log.Printf("writing to map nr. %v, len %v", w, len(readMap))
-
 				// increasing article-Number Count value by one
+				debugLog().printf("writing to map nr. %v, len %v", w, len(readMap))
 				readMap[aNr]++
 			}
 		}
@@ -82,7 +81,7 @@ func (rcv *Counter) TopNArticlesChan() <-chan []Article {
 
 				readMap := rcv.acMaps[r]
 
-				//log.Printf("reading from map nr. %d, length of map %v", r, len(readMap))
+				debugLog().printf("reading from map nr. %d, length of map %v", r, len(readMap))
 				collection <- getHighestNArticles(rcv.topN, readMap)
 
 				// reset map
@@ -105,18 +104,18 @@ func (rcv *Counter) switchMap() {
 			if writeMap == 0 {
 				writeMap = 1
 
-				//log.Println("sending write switch map1")
+				debugLog().println("sending write switch map1")
 				rcv.wsw <- 1
 
-				//log.Println("sending read switch map0")
+				debugLog().println("sending read switch map0")
 				rcv.rsw <- 0
 			} else {
 				writeMap = 0
 
-				//log.Println("sending write switch map0")
+				debugLog().println("sending write switch map0")
 				rcv.wsw <- 0
 
-				//log.Println("sending read switch map1")
+				debugLog().println("sending read switch map1")
 				rcv.rsw <- 1
 			}
 		}
@@ -138,7 +137,8 @@ func (rcv *Counter) startTicker() {
 				continue
 			}
 
-			//log.Println("send switch signal")
+			debugLog().println("send switch signal")
+
 			rcv.switchChan <- true
 			proceed = false
 		}
