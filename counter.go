@@ -72,7 +72,7 @@ func (rcv *Counter) CountArticleChan() chan<- string {
 
 func (rcv *Counter) TopNArticlesChan() <-chan []Article {
 
-	collection := make(chan []Article)
+	topNChan := make(chan []Article)
 
 	go func() {
 		for {
@@ -82,7 +82,7 @@ func (rcv *Counter) TopNArticlesChan() <-chan []Article {
 				readMap := rcv.acMaps[r]
 
 				debugLog().printf("reading from map nr. %d, length of map %v", r, len(readMap))
-				collection <- getHighestNArticles(rcv.topN, readMap)
+				topNChan <- getHighestNArticles(rcv.topN, readMap)
 
 				// reset map
 				rcv.acMaps[r] = make(map[string]int)
@@ -91,7 +91,7 @@ func (rcv *Counter) TopNArticlesChan() <-chan []Article {
 		}
 	}()
 
-	return collection
+	return topNChan
 }
 
 func (rcv *Counter) switchMap() {
