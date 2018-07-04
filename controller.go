@@ -10,29 +10,36 @@ func Init() {
 	initConfig()
 }
 
-// The 0th price is the comparison-price, the first price is the best price
-func FetchPricesForArticleNr(articleNumber string) ([]float64, error){
+type ProductCheck struct {
+	ProductName       string
+	ProductPrice      float64
+	ComparisionPrices []float64
+}
 
-	var prices []float64
+// The 0th price is the comparison-price, the first price is the best price
+func CheckProductForArticleNr(articleNumber string) (*ProductCheck, error) {
+
+	pc := ProductCheck{}
 
 	// fetch ean and comparison-price
-	ean, price, err := fetchEanAndPriceByArticleNumber(articleNumber)
+	pd, err := fetchProductDataByArticleNumber(articleNumber)
 	if err != nil {
 		return nil, err
 	}
+	pc.ProductName = pd.name
 
-	// set comparison-price to 0th element of price slice
-	p, err := strconv.ParseFloat(price, 64)
-	prices = append(prices, p)
+	p, err := strconv.ParseFloat(pd.price, 64)
+	if err != nil {
+		return nil, err
+	}
+	pc.ProductPrice = p
 
 	// fetch best prices
-	fp, err := fetchPricesForEan(ean)
+	prices, err := fetchPricesForEan(pd.ean)
 	if err != nil {
 		return nil, err
 	}
+	pc.ComparisionPrices = prices
 
-	// append best prices to slice
-	prices = append(prices, fp...)
-
-	return prices, nil
+	return &pc, nil
 }

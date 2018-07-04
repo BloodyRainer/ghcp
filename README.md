@@ -41,13 +41,16 @@ go func() {
         log.Printf("1: aNr: %v, Count: %v \n", articles[0].Number, articles[0].Count)
         log.Printf("2: aNr: %v, Count: %v \n", articles[1].Number, articles[1].Count)
 
-        prices, err :=ghcp.FetchPricesForArticleNr(articles[0].Number)
+        pc, err :=ghcp.CheckProductForArticleNr(articles[0].Number)
         if err != nil {
             log.Printf("failed to fetch prices for EAN: %v", err.Error())
         }
 
-        for i, p := range  prices{
-            fmt.Printf("%d: %v\n", i, p)
+        log.Println("Article: " + pc.ProductName)
+        log.Printf("ProductPrice: %v \n", pc.ProductPrice)
+        log.Println("PriceComparison ")
+        for i, p := range pc.ComparisionPrices {
+            log.Printf("%d: %v\n", i, p)
         }
     }
 }()
