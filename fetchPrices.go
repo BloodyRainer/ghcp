@@ -6,16 +6,21 @@ import (
 	"io/ioutil"
 	"log"
 	"regexp"
+	"errors"
 	"strings"
 	"strconv"
-	"errors"
 )
+
+type PriceInfo struct {
+	Price    float64
+	Merchant string
+}
 
 var priceRegex *regexp.Regexp
 
-func fetchPricesForEan(ean string) ([]float64, error) {
+func fetchPricesForEan(ean string) ([]PriceInfo, error) {
 
-	log.Printf("Trying to fetch prices for EAN: %s", ean)
+	log.Printf("Trying to fetch pis for EAN: %s\n", ean)
 
 	client := &http.Client{}
 
@@ -47,25 +52,28 @@ func fetchPricesForEan(ean string) ([]float64, error) {
 		return nil, err
 	}
 
-	// read prices from html
-	prices := parsePrices(string(body))
-	if len(prices) == 0 {
+	// read pis from html
+	pis := parsePriceInfos(string(body))
+	if len(pis) == 0 {
 		return nil, errors.New("EAN not found on: " + getConfig().PricesDomain)
 	}
 
-	return prices, nil
+	return pis, nil
 
 }
 
-func parsePrices(html string) []float64 {
+func parsePriceInfos(html string) []PriceInfo {
 
 	priceRegex = regexp.MustCompile(getConfig().PricesRegex)
 
-	var prices []float64
+	var pis []PriceInfo
 
-	rawPriceMatches := priceRegex.FindAllStringSubmatch(html, -1)
+	rawMatches := priceRegex.FindAllStringSubmatch(html, -1)
 
-	for _, p := range rawPriceMatches {
+	//fmt.Println(html)
+
+	for _, p := range rawMatches {
+
 		var priceString string
 		priceString = strings.Replace(p[1], ",", ".", -1)
 		priceString = strings.Replace(priceString, "--", "00", -1)
@@ -76,8 +84,14 @@ func parsePrices(html string) []float64 {
 			continue
 		}
 
-		prices = append(prices, price)
+		merchant := p[2]
+		pi := PriceInfo{
+			Price: price,
+			Merchant: merchant,
+		}
+
+		pis = append(pis, pi)
 	}
 
-	return prices
+	return pis
 }

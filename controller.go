@@ -13,15 +13,15 @@ func Init() {
 type ProductCheck struct {
 	ProductName       string
 	ProductPrice      float64
-	ComparisionPrices []float64
+	ComparisionPrices []PriceInfo
 }
 
-// The 0th price is the comparison-price, the first price is the best price
+// The 0th Price is the comparison-Price, the first Price is the best Price
 func CheckProductForArticleNr(articleNumber string) (*ProductCheck, error) {
 
 	pc := ProductCheck{}
 
-	// fetch ean and comparison-price
+	// fetch ean and comparison-Price
 	pd, err := fetchProductDataByArticleNumber(articleNumber)
 	if err != nil {
 		return nil, err

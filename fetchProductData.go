@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os/exec"
 	"strings"
+	"log"
 )
 
 var eanReg *regexp.Regexp
@@ -25,6 +26,8 @@ func init() {
 }
 
 func fetchProductDataByArticleNumber(articleNr string) (productData, error) {
+
+	log.Printf("Trying to fetch EAN for article-number: %s\n", articleNr)
 
 	pd := productData{}
 
@@ -85,12 +88,12 @@ func parsePrice(productData string) (string, error) {
 
 	priceMatch := priceReg.FindStringSubmatch(productData)
 	if len(priceMatch) < 2 || priceMatch[1] == "" {
-		return "", errors.New("no price found")
+		return "", errors.New("no Price found")
 	}
 
 	price := priceMatch[1]
 	if  price == "null" {
-		return "", errors.New("price is 'null'")
+		return "", errors.New("price is null")
 	}
 
 	return price, nil
@@ -105,6 +108,7 @@ func parseName(body string) (string, error) {
 	// TODO: dirty hacks
 	name := strings.Replace(nameMatch[1], "&quot;", `'`, -1)
 	name = strings.Replace(name, "&amp;", "&", -1)
+	name = strings.Replace(name, "#ft5_slash#", "/", -1)
 
 	return name, nil
 }

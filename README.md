@@ -44,13 +44,14 @@ go func() {
         pc, err :=ghcp.CheckProductForArticleNr(articles[0].Number)
         if err != nil {
             log.Printf("failed to fetch prices for EAN: %v", err.Error())
+            continue
         }
 
         log.Println("Article: " + pc.ProductName)
         log.Printf("ProductPrice: %v \n", pc.ProductPrice)
         log.Println("PriceComparison ")
         for i, p := range pc.ComparisionPrices {
-            log.Printf("%d: %v\n", i, p)
+            log.Printf("%d: %v (%s)\n", i, p.Price, p.Merchant)
         }
     }
 }()
