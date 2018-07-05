@@ -50,7 +50,7 @@ go func() {
         log.Println("Article: " + pc.ProductName)
         log.Printf("ProductPrice: %v \n", pc.ProductPrice)
         log.Println("PriceComparison ")
-        for i, p := range pc.ComparisionPrices {
+        for i, p := range pc.ComparisonOffer {
             log.Printf("%d: %v (%s)\n", i, p.Price, p.Merchant)
         }
     }

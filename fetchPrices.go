@@ -11,14 +11,14 @@ import (
 	"strconv"
 )
 
-type PriceInfo struct {
+type Offer struct {
 	Price    float64
 	Merchant string
 }
 
 var priceRegex *regexp.Regexp
 
-func fetchPricesForEan(ean string) ([]PriceInfo, error) {
+func fetchPricesForEan(ean string) ([]Offer, error) {
 
 	log.Printf("Trying to fetch pis for EAN: %s\n", ean)
 
@@ -62,11 +62,11 @@ func fetchPricesForEan(ean string) ([]PriceInfo, error) {
 
 }
 
-func parsePriceInfos(html string) []PriceInfo {
+func parsePriceInfos(html string) []Offer {
 
 	priceRegex = regexp.MustCompile(getConfig().PricesRegex)
 
-	var pis []PriceInfo
+	var pis []Offer
 
 	rawMatches := priceRegex.FindAllStringSubmatch(html, -1)
 
@@ -85,7 +85,7 @@ func parsePriceInfos(html string) []PriceInfo {
 		}
 
 		merchant := p[2]
-		pi := PriceInfo{
+		pi := Offer{
 			Price: price,
 			Merchant: merchant,
 		}

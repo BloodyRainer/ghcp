@@ -11,9 +11,9 @@ func Init() {
 }
 
 type ProductCheck struct {
-	ProductName       string
-	ProductPrice      float64
-	ComparisionPrices []PriceInfo
+	ProductName     string
+	ProductPrice    float64
+	ComparisonOffer []Offer
 }
 
 // The 0th Price is the comparison-Price, the first Price is the best Price
@@ -39,7 +39,7 @@ func CheckProductForArticleNr(articleNumber string) (*ProductCheck, error) {
 	if err != nil {
 		return nil, err
 	}
-	pc.ComparisionPrices = prices
+	pc.ComparisonOffer = prices
 
 	return &pc, nil
 }
