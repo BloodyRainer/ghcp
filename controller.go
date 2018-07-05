@@ -12,6 +12,8 @@ func Init() {
 
 type ProductCheck struct {
 	ProductName     string
+	ArticleNumber   string
+	Ean             string
 	ProductPrice    float64
 	ComparisonOffer []Offer
 }
@@ -19,7 +21,9 @@ type ProductCheck struct {
 // The 0th Price is the comparison-Price, the first Price is the best Price
 func CheckProductForArticleNr(articleNumber string) (*ProductCheck, error) {
 
-	pc := ProductCheck{}
+	pc := ProductCheck{
+		ArticleNumber: articleNumber,
+	}
 
 	// fetch ean and comparison-Price
 	pd, err := fetchProductDataByArticleNumber(articleNumber)
@@ -27,6 +31,7 @@ func CheckProductForArticleNr(articleNumber string) (*ProductCheck, error) {
 		return nil, err
 	}
 	pc.ProductName = pd.name
+	pc.Ean = pd.ean
 
 	p, err := strconv.ParseFloat(pd.price, 64)
 	if err != nil {
